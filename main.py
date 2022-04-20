@@ -1,5 +1,7 @@
 import logging
-from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, ConversationHandler
+from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, ConversationHandler, CallbackQueryHandler
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup
+from requests import get
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -8,6 +10,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TOKEN = '5165015893:AAGYCc1P8pRUSmI2iQLGvwbrebjHwyiNvhA'
+global lat, lon
 
 
 def start(update, context):
@@ -16,18 +19,85 @@ def start(update, context):
     return 1
 
 
-def what(update, context):
+def place(update, context):
+    global lat, lon, ch_id
+    ch_id = update.message.from_user.id
     locality = update.message.text
+    request = f"https://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={locality}&format=json"
+    response = get(request)
+    json_response = response.json()
+    toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
+    toponym_coordinates = toponym["Point"]["pos"]
+    lat, lon = toponym_coordinates.split()
+    keyboard = [
+        [InlineKeyboardButton("Рестораны и кафе", callback_data='1'),
+         InlineKeyboardButton("Достопримечательности", callback_data='2')],
+        [InlineKeyboardButton("Шоппинг", callback_data='3'),
+         InlineKeyboardButton("Развлечения", callback_data='4')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(
-        f"{locality}? Хороший выбор!\nА что ты хочешь посмотреть?")
+        f"{locality}? Красивое место! Что именно тебя интересует?", reply_markup=reply_markup)
     return 2
 
 
-def result(update, context):
-
-    # надо настроить вывод результата
-
-    return ConversationHandler.END
+def button(update, context):
+    query = update.callback_query
+    query.answer()
+    match query.data:
+        case '1':
+            keyboard = [
+                [InlineKeyboardButton("Бары", callback_data='bar'),
+                 InlineKeyboardButton("Барбекью", callback_data='barbecue')],
+                [InlineKeyboardButton("Бистро", callback_data='bistro'),
+                 InlineKeyboardButton("Русская кухня", callback_data='russian')],
+                [InlineKeyboardButton("Фаст-фуд", callback_data='fast food'),
+                 InlineKeyboardButton("Итальянская кухня", callback_data='italian')]
+            ]
+        case '2':
+            keyboard = [
+                [InlineKeyboardButton("Амфитеатры", callback_data='amphitheater'),
+                 InlineKeyboardButton("Музеи", callback_data='museum')],
+                [InlineKeyboardButton("Выставочные комплексы", callback_data='exhibition convention center'),
+                 InlineKeyboardButton("Памятники", callback_data='monument')]
+            ]
+        case '3':
+            keyboard = [
+                [InlineKeyboardButton("Сувениры", callback_data='gifts, cards, novelties souvenirs'),
+                 InlineKeyboardButton("Салоны красоты", callback_data='beauty salon')],
+                [InlineKeyboardButton("Мужская одежда", callback_data='clothing accessories: men'),
+                 InlineKeyboardButton("Женская одежда", callback_data='clothing accessories: women')]
+            ]
+        case '4':
+            keyboard = [
+                [InlineKeyboardButton("Амфитеатры", callback_data='amphitheater'),
+                 InlineKeyboardButton("Игровые автоматы", callback_data='amusement arcade')],
+                [InlineKeyboardButton("Парки развлечений", callback_data='amusement park'),
+                 InlineKeyboardButton("Ботанические сады", callback_data='arboreta botanical gardens')],
+                [InlineKeyboardButton("Воздушные шары", callback_data='balloonport'),
+                 InlineKeyboardButton("Пляжи", callback_data='beach')],
+                [InlineKeyboardButton("Боулинг", callback_data='bowling'),
+                 InlineKeyboardButton("Пляжи", callback_data='beach')]
+            ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    # не работает, просит какой-то self...
+    Bot.send_message(chat_id=ch_id, text="А более точно?",
+                     reply_markup=reply_markup)
+    query2 = update.callback_query
+    query2.answer()
+    type = query2.data  # выбранная подкатегория
+    next = True
+    while next:
+        keyboard = [
+            [InlineKeyboardButton("Дальше", callback_data='True'),
+             InlineKeyboardButton("Стоп", callback_data='False')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.message.reply_text(
+            "Описание обекта", reply_markup=reply_markup)  # здесь заглушка
+        query3 = update.callback_query
+        query3.answer()
+        next = query2.data
 
 
 def stop(update, context):
@@ -43,14 +113,14 @@ def main():
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
-            1: [MessageHandler(Filters.text & ~Filters.command, what)],
-            2: [MessageHandler(Filters.text & ~Filters.command, result)]
+            1: [MessageHandler(Filters.text & ~Filters.command, place)],
+            2: [MessageHandler(Filters.text & ~Filters.command, button)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
 
     dp.add_handler(conv_handler)
-    dp.add_handler(conv_handler)
+    dp.add_handler(CallbackQueryHandler(button))
     updater.start_polling()
 
     updater.idle()
