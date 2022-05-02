@@ -20,9 +20,9 @@ def find_subcategories(categories, lat, lon, r):
     if not response["results"]:
         return []
     results = response["results"]
-    subcategories = []
+    subcategories = set()
     for result in results:
         poi = result["poi"]
         category_set = poi["categorySet"][0]
-        subcategories.append(category_set["id"])
-    return subcategories
+        subcategories.add(category_set["id"])
+    return list(subcategories)

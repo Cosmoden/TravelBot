@@ -97,19 +97,6 @@ def subcategory(update, context):
     query = update.callback_query
     query.answer()
     poi_id = query.data
-    flag = True
-    while flag:
-        keyboard = [
-            [InlineKeyboardButton("Дальше", callback_data='True'),
-             InlineKeyboardButton("Стоп", callback_data='False')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        img = ''
-        message = ''
-        context.bot.send_photo(update.message.chat_id, img, caption=message, reply_markup=reply_markup)
-        query3 = update.callback_query
-        query3.category()
-        flag = query2.data
 
 
 def stop(update, context):
