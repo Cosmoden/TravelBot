@@ -29,7 +29,7 @@ def start(update, context):
 def place(update, context):
     global lat, lon
     address = update.message.text
-    lat, lon = get_coordinates(address).split()
+    lon, lat = get_coordinates(address).split()
     update.message.reply_text(
         f"{address}? Отличное место! Укажи радиус поиска в км")
     return 2
@@ -61,6 +61,10 @@ def category(update, context):
         '4': ['9927', '7318', '9362']
     }
     subcategories = find_subcategories(categories_dict[query.data], lat, lon, r)
+    if not subcategories:
+        update.callback_query.message.edit_text("К сожалению, в этой зоне поиска нет подходящих мест.\n"
+                                                "Попробуем еще раз? Введи адрес")
+        return 1
     for i in range(0, len(subcategories), 2):
         if i + 1 < len(subcategories):
             id1 = subcategories[i]
