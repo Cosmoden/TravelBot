@@ -66,10 +66,10 @@ def category(update, context):
                                                 "Попробуем еще раз? Введи адрес")
         return 1
     for i in range(0, len(subcategories), 2):
+        name1 = ""
+        id1 = subcategories[i]
         if i + 1 < len(subcategories):
-            id1 = subcategories[i]
             id2 = subcategories[i + 1]
-            name1 = ""
             name2 = ""
             for cat in categories:
                 if cat["id"] == id1:
@@ -81,8 +81,6 @@ def category(update, context):
             keyboard.append([InlineKeyboardButton(name1, callback_data=id1),
                              InlineKeyboardButton(name2, callback_data=id2)])
         else:
-            id1 = subcategories[i]
-            name1 = ""
             for cat in categories:
                 if cat["id"] == id1:
                     name1 = cat["name"]

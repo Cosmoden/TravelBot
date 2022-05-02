@@ -9,6 +9,5 @@ def get_coordinates(address):
     response = get(request)
     json_response = response.json()
     toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
-    toponym_coordinates = toponym["Point"]["pos"]
-    return toponym_coordinates
+    return toponym["Point"]["pos"]
 
