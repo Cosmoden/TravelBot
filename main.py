@@ -2,7 +2,7 @@ import logging
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, ConversationHandler, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from geocode import get_coordinates
-from find_poi import find_subcategories
+from poi_search import find_subcategories, find_poi
 from json import load
 from translate import en_ru
 
@@ -16,6 +16,8 @@ TOKEN = '5165015893:AAGYCc1P8pRUSmI2iQLGvwbrebjHwyiNvhA'
 lat = 0.0
 lon = 0.0
 r = 0
+cont = False
+poi_generator = None
 with open("categories.json", 'r') as jsonfile:
     categories = load(jsonfile)["poiCategories"]
 
@@ -94,11 +96,44 @@ def category(update, context):
 
 
 def subcategory(update, context):
+    global cont, poi_generator
     query = update.callback_query
     query.answer()
     poi_id = query.data
     cont = True
+    poi_generator = find_poi(poi_id, lon, lat, r)
+    poi = next(poi_generator)
+    keyboard = [
+        [InlineKeyboardButton("Дальше", callback_data='1'),
+         InlineKeyboardButton("Стоп", callback_data='0')]
+    ]
+    desc = f"""{poi["name"]} \n
+               Телефон: {poi["phone"]} \n
+               Сайт: {poi["url"]} \n"""
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.message.edit_text(desc, reply_markup=reply_markup)
+    return 5
 
+
+def choice(update, context):
+    global cont, poi_generator
+    query = update.callback_query
+    query.answer()
+    cont = bool(int(query.data))
+    if not cont:
+        update.callback_query.message.edit_text("Хороший выбор!")
+        return 1
+    poi = next(poi_generator)
+    desc = f"""{poi["name"]} \n
+                   Телефон: {poi["phone"]} \n
+                   Сайт: {poi["url"]} \n"""
+    keyboard = [
+        [InlineKeyboardButton("Дальше", callback_data='1'),
+         InlineKeyboardButton("Стоп", callback_data='0')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.message.edit_text(desc, reply_markup=reply_markup)
+    return 5
 
 
 def stop(update, context):
@@ -117,7 +152,8 @@ def main():
             1: [MessageHandler(Filters.text & ~Filters.command, place)],
             2: [MessageHandler(Filters.text & ~Filters.command, radius)],
             3: [CallbackQueryHandler(category)],
-            4: [CallbackQueryHandler(subcategory)]
+            4: [CallbackQueryHandler(subcategory)],
+            5: [CallbackQueryHandler(choice)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
