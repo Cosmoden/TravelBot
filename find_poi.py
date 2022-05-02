@@ -5,6 +5,8 @@ from requests import get
 
 def find_subcategories(categories, lat, lon, r):
     url = "https://api.tomtom.com/search/2/nearbySearch/.json"
+    with open("tomtom_key.txt", 'r') as f:
+        key = f.read()
     params = {
         "lat": lat,
         "lon": lon,
@@ -12,7 +14,7 @@ def find_subcategories(categories, lat, lon, r):
         "view": "Unified",
         "categorySet": ','.join(categories),
         "relatedPois": "off",
-        "key": "joA6ejluFqgrbSGdhuDQ1n0LqgnbCMQN"
+        "key": key
     }
     response = get(url, params=params).json()
     with open("response.json", 'w') as jsonfile:

@@ -76,8 +76,8 @@ def category(update, context):
                     name1 = cat["name"]
                 elif cat["id"] == id2:
                     name2 = cat["name"]
-            name1 = en_ru(name1)
-            name2 = en_ru(name2)
+            name1 = en_ru(name1).lower().capitalize()
+            name2 = en_ru(name2).lower().capitalize()
             keyboard.append([InlineKeyboardButton(name1, callback_data=id1),
                              InlineKeyboardButton(name2, callback_data=id2)])
         else:
@@ -86,7 +86,7 @@ def category(update, context):
             for cat in categories:
                 if cat["id"] == id1:
                     name1 = cat["name"]
-            name1 = en_ru(name1)
+            name1 = en_ru(name1).lower().capitalize()
             keyboard.append([InlineKeyboardButton(name1, callback_data=id1)])
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text("А более точно?", reply_markup=reply_markup)
@@ -97,6 +97,8 @@ def subcategory(update, context):
     query = update.callback_query
     query.answer()
     poi_id = query.data
+    cont = True
+
 
 
 def stop(update, context):

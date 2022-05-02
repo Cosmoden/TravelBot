@@ -2,7 +2,9 @@ from requests import get
 
 
 def get_coordinates(address):
-    request = f"https://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&" \
+    with open("geocode_key.txt", 'r') as f:
+        key = f.read()
+    request = f"https://geocode-maps.yandex.ru/1.x/?apikey={key}&" \
               f"geocode={address}&format=json"
     response = get(request)
     json_response = response.json()
