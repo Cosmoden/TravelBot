@@ -45,41 +45,12 @@ def button(update, context):
     query = update.callback_query
     query.answer()
     keyboard = []
-    match query.data:
-        case '1':
-            keyboard = [
-                [InlineKeyboardButton("Бары", callback_data='bar'),
-                 InlineKeyboardButton("Барбекью", callback_data='barbecue')],
-                [InlineKeyboardButton("Бистро", callback_data='bistro'),
-                 InlineKeyboardButton("Русская кухня", callback_data='russian')],
-                [InlineKeyboardButton("Фаст-фуд", callback_data='fast food'),
-                 InlineKeyboardButton("Итальянская кухня", callback_data='italian')]
-            ]
-        case '2':
-            keyboard = [
-                [InlineKeyboardButton("Амфитеатры", callback_data='amphitheater'),
-                 InlineKeyboardButton("Музеи", callback_data='museum')],
-                [InlineKeyboardButton("Выставочные комплексы", callback_data='exhibition convention center'),
-                 InlineKeyboardButton("Памятники", callback_data='monument')]
-            ]
-        case '3':
-            keyboard = [
-                [InlineKeyboardButton("Сувениры", callback_data='gifts, cards, novelties souvenirs'),
-                 InlineKeyboardButton("Салоны красоты", callback_data='beauty salon')],
-                [InlineKeyboardButton("Мужская одежда", callback_data='clothing accessories: men'),
-                 InlineKeyboardButton("Женская одежда", callback_data='clothing accessories: women')]
-            ]
-        case '4':
-            keyboard = [
-                [InlineKeyboardButton("Амфитеатры", callback_data='amphitheater'),
-                 InlineKeyboardButton("Игровые автоматы", callback_data='amusement arcade')],
-                [InlineKeyboardButton("Парки развлечений", callback_data='amusement park'),
-                 InlineKeyboardButton("Ботанические сады", callback_data='arboreta botanical gardens')],
-                [InlineKeyboardButton("Воздушные шары", callback_data='balloonport'),
-                 InlineKeyboardButton("Пляжи", callback_data='beach')],
-                [InlineKeyboardButton("Боулинг", callback_data='bowling'),
-                 InlineKeyboardButton("Пляжи", callback_data='beach')]
-            ]
+    categories = {
+        '1': ['7315', '9376'],
+        '2': ['7376', '7339'],
+        '3': ['9361'],
+        '4': ['9927', '7318', '9362']
+    }
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text("А более точно?", reply_markup=reply_markup)
     query2 = update.callback_query
