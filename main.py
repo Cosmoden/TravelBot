@@ -1,7 +1,10 @@
 import logging
 from telegram.ext import Updater, MessageHandler, Filters, CommandHandler, ConversationHandler, CallbackQueryHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from requests import get
+from geocode import get_coordinates
+from find_poi import find_subcategories
+from json import load
+from translate import en_ru
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -10,69 +13,99 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TOKEN = '5165015893:AAGYCc1P8pRUSmI2iQLGvwbrebjHwyiNvhA'
-global lat, lon
+lat = 0.0
+lon = 0.0
+r = 0
+with open("categories.json", 'r') as jsonfile:
+    categories = load(jsonfile)["poiCategories"]
 
 
 def start(update, context):
     update.message.reply_text(
-        "Привет!\nДавай вместе разнообразим твоё путешествие.\nКуда планируешь поехать? Напиши название города.")
+        "Привет!\nДавай вместе разнообразим твоё путешествие.\nГде ты находишься? Напиши свой адрес.")
     return 1
 
 
 def place(update, context):
     global lat, lon
-    locality = update.message.text
-    request = f"https://geocode-maps.yandex.ru/1.x/?apikey=40d1649f-0493-4b70-98ba-98533de7710b&geocode={locality}&format=json"
-    response = get(request)
-    json_response = response.json()
-    toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
-    toponym_coordinates = toponym["Point"]["pos"]
-    lat, lon = toponym_coordinates.split()
+    address = update.message.text
+    lat, lon = get_coordinates(address).split()
+    update.message.reply_text(
+        f"{address}? Отличное место! Укажи радиус поиска в км")
+    return 2
+
+
+def radius(update, context):
+    global r
+    r = float(update.message.text)
     keyboard = [
         [InlineKeyboardButton("Рестораны и кафе", callback_data='1'),
          InlineKeyboardButton("Достопримечательности", callback_data='2')],
         [InlineKeyboardButton("Шоппинг", callback_data='3'),
-         InlineKeyboardButton("Развлекательные заведения", callback_data='4')]
+         InlineKeyboardButton("Развлечения", callback_data='4')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(f"{locality}? Красивое место! Что именно тебя интересует?", reply_markup=reply_markup)
-    return 2
+    update.message.reply_text("Что именно тебя интересует?", reply_markup=reply_markup)
+    return 3
 
 
-def button(update, context):
+def category(update, context):
+    global lat, lon, r
     query = update.callback_query
     query.answer()
-    match query.data:
-        case '1':
-            search_food()
-        case '2':
-            search_sights()
-        case '3':
-            search_shopping()
-        case '4':
-            search_entertainment()
+    keyboard = []
+    categories_dict = {
+        '1': ['7315', '9376'],
+        '2': ['7376', '7339'],
+        '3': ['9361'],
+        '4': ['9927', '7318', '9362']
+    }
+    subcategories = find_subcategories(categories_dict[query.data], lat, lon, r)
+    for i in range(0, len(subcategories), 2):
+        if i + 1 < len(subcategories):
+            id1 = subcategories[i]
+            id2 = subcategories[i + 1]
+            name1 = ""
+            name2 = ""
+            for cat in categories:
+                if cat["id"] == id1:
+                    name1 = cat["name"]
+                elif cat["id"] == id2:
+                    name2 = cat["name"]
+            name1 = en_ru(name1)
+            name2 = en_ru(name2)
+            keyboard.append([InlineKeyboardButton(name1, callback_data=id1),
+                             InlineKeyboardButton(name2, callback_data=id2)])
+        else:
+            id1 = subcategories[i]
+            name1 = ""
+            for cat in categories:
+                if cat["id"] == id1:
+                    name1 = cat["name"]
+            name1 = en_ru(name1)
+            keyboard.append([InlineKeyboardButton(name1, callback_data=id1)])
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.callback_query.message.edit_text("А более точно?", reply_markup=reply_markup)
+    return 4
 
 
-def search_food():
-    pass
-
-
-def search_sights():
-    pass
-
-
-def search_shopping():
-    pass
-
-
-def search_entertainment():
-    pass
-
-
-def result(update, context):
-    # надо настроить вывод результата
-
-    return ConversationHandler.END
+def subcategory(update, context):
+    query = update.callback_query
+    query.answer()
+    poi_id = query.data
+    flag = True
+    while flag:
+        keyboard = [
+            [InlineKeyboardButton("Дальше", callback_data='True'),
+             InlineKeyboardButton("Стоп", callback_data='False')]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        img = ''
+        message = ''
+        context.bot.send_photo(update.message.chat_id, img, caption=message, reply_markup=reply_markup)
+        query3 = update.callback_query
+        query3.category()
+        flag = query2.data
 
 
 def stop(update, context):
@@ -89,14 +122,15 @@ def main():
         entry_points=[CommandHandler('start', start)],
         states={
             1: [MessageHandler(Filters.text & ~Filters.command, place)],
-            2: [MessageHandler(Filters.text & ~Filters.command, search)],
-            3: [MessageHandler(Filters.text & ~Filters.command, result)]
+            2: [MessageHandler(Filters.text & ~Filters.command, radius)],
+            3: [CallbackQueryHandler(category)],
+            4: [CallbackQueryHandler(subcategory)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
 
     dp.add_handler(conv_handler)
-    dp.add_handler(CallbackQueryHandler(button))
+    dp.add_handler(CallbackQueryHandler(category))
     updater.start_polling()
 
     updater.idle()
