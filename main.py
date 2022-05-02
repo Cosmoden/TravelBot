@@ -44,6 +44,7 @@ def place(update, context):
 def button(update, context):
     query = update.callback_query
     query.answer()
+    keyboard = []
     match query.data:
         case '1':
             keyboard = [
@@ -80,24 +81,23 @@ def button(update, context):
                  InlineKeyboardButton("Пляжи", callback_data='beach')]
             ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    # не работает, просит какой-то self...
-    Bot.send_message(chat_id=ch_id, text="А более точно?",
-                     reply_markup=reply_markup)
+    update.callback_query.message.edit_text("А более точно?", reply_markup=reply_markup)
     query2 = update.callback_query
     query2.answer()
-    type = query2.data  # выбранная подкатегория
-    next = True
-    while next:
+    poi_type = query2.data
+    flag = True
+    while flag:
         keyboard = [
             [InlineKeyboardButton("Дальше", callback_data='True'),
              InlineKeyboardButton("Стоп", callback_data='False')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text(
-            "Описание обекта", reply_markup=reply_markup)  # здесь заглушка
+        img = ''
+        message = ''
+        context.bot.send_photo(update.message.chat_id, img, caption=message, reply_markup=reply_markup)
         query3 = update.callback_query
         query3.answer()
-        next = query2.data
+        flag = query2.data
 
 
 def stop(update, context):
