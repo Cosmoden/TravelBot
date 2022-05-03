@@ -27,8 +27,10 @@ with open("categories.json", 'r') as jsonfile:
 
 
 def start(update, context):
-    update.message.reply_text(
-        "Привет!\nДавай вместе разнообразим твоё путешествие.\nГде ты находишься? Напиши свой адрес.")
+    context.bot.send_photo(update.message.chat_id,
+                           "https://s.inyourpocket.com/img/figure/2019-10/mariacki_old-square_adobestock_rh2010.jpeg",
+                           caption="Привет!\nДавай вместе разнообразим твоё путешествие.\n"
+                           "Где ты находишься? Напиши свой адрес.")
     return 1
 
 
