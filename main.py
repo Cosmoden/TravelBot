@@ -170,6 +170,8 @@ def choice(update, context):
              InlineKeyboardButton("Посмотреть закладки", callback_data='3')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
+        if not text:
+            text = "Закладок пока нет"
         update.callback_query.message.edit_text(text, reply_markup=reply_markup)
         return 5
     if not cont:
@@ -231,4 +233,7 @@ def main():
 
 if __name__ == '__main__':
     db_session.global_init("db/places.db")
+    db_sess = db_session.create_session()
+    db_sess.query(Place).delete()
+    db_sess.commit()
     main()
