@@ -25,10 +25,13 @@ def info(org_name, lon, lat, r):
         website = f"""Сайт: {properties["CompanyMetaData"]["url"]}"""
     except KeyError:
         website = ""
-    desc = f"""{properties["name"]}
+    desc = f"""{properties["name"]}\n
     {properties["description"]}
     Телефон: {properties["CompanyMetaData"]["Phones"][0]["formatted"]}
     Часы работы: {properties["CompanyMetaData"]["Hours"]["text"]}
     {website}"""
-
+    org_ll = ','.join(map(str, json_response["features"][0]["geometry"]["coordinates"]))
+    static_api_request = f"https://static-maps.yandex.ru/1.x/?ll={','.join(map(str, [lon, lat]))}&" \
+                         f"spn={','.join(map(str, [d1, d2]))}&l=map&pt={org_ll},pm2rdm"
+    desc += '\n' + "Посмотреть на карте: " + static_api_request
     return desc
