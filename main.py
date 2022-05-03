@@ -6,6 +6,7 @@ from poi_search import find_subcategories, find_poi
 from json import load
 from translate import en_ru
 from org_search import info
+from data import db_session
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -162,4 +163,5 @@ def main():
 
 
 if __name__ == '__main__':
+    db_session.global_init("db/places.db")
     main()
