@@ -1,5 +1,3 @@
-import json
-
 from requests import get
 
 
@@ -44,6 +42,4 @@ def find_poi(category, lon, lat, r):
     response = get(url, params=params).json()
     results = response["results"]
     for result in results:
-        with open("res.json", 'w') as jsonfile:
-            json.dump(result["poi"], jsonfile)
         yield result["poi"]
