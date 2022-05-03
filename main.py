@@ -140,7 +140,7 @@ def choice(update, context):
              InlineKeyboardButton("Посмотреть закладки", callback_data='3')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        if db_sess.query(Place).filter(Place.name == place_info[0]):
+        if db_sess.query(Place).filter(Place.name == place_info[0]).first():
             update.callback_query.message.edit_text("Место уже в закладках", reply_markup=reply_markup)
             return 5
         place = Place()
