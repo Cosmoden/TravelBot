@@ -10,4 +10,3 @@ def get_coordinates(address):
     json_response = response.json()
     toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
     return toponym["Point"]["pos"]
-

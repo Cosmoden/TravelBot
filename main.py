@@ -53,7 +53,8 @@ def radius(update, context):
          InlineKeyboardButton("Развлечения", callback_data='4')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Начнем подбор мест. Что именно тебя интересует?", reply_markup=reply_markup)
+    update.message.reply_text(
+        "Начнем подбор мест. Что именно тебя интересует?", reply_markup=reply_markup)
     return 3
 
 
@@ -68,7 +69,8 @@ def category(update, context):
         '3': ['9361'],
         '4': ['9927', '7318', '9362']
     }
-    subcategories = find_subcategories(categories_dict[query.data], lat, lon, r)
+    subcategories = find_subcategories(
+        categories_dict[query.data], lat, lon, r)
     if not subcategories:
         update.callback_query.message.edit_text("К сожалению, в этой зоне поиска нет подходящих мест.\n"
                                                 "Попробуем еще раз? Введи адрес")
@@ -95,7 +97,8 @@ def category(update, context):
             name1 = en_ru(name1).lower().capitalize()
             keyboard.append([InlineKeyboardButton(name1, callback_data=id1)])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.message.edit_text("А более точно?", reply_markup=reply_markup)
+    update.callback_query.message.edit_text(
+        "А более точно?", reply_markup=reply_markup)
     return 4
 
 
@@ -108,12 +111,22 @@ def subcategory(update, context):
     poi_generator = find_poi(poi_id, lon, lat, r)
     poi = next(poi_generator)
     poi_info = info(poi["name"], lon, lat, r)
-    desc = f"""{poi_info[0]}\n
-    {poi_info[1]}
-    Телефон: {poi_info[2]}
-    Часы работы: {poi_info[3]}
-    {poi_info[4]}
-    Посмотреть на карте: {poi_info[5]}"""
+    if len(poi_info) == 6:
+        desc = f"""{poi_info[0]}\n
+        {poi_info[1]}
+        Телефон: {poi_info[2]}
+        Часы работы: {poi_info[3]}
+        {poi_info[4]}
+        Посмотреть на карте: {poi_info[5]}"""
+    elif len(poi_info) == 5:
+        desc = f"""{poi_info[0]}\n
+        {poi_info[1]}
+        Телефон / часы работы: {poi_info[3]}
+        Посмотреть на карте: {poi_info[4]}"""
+    else:
+        desc = f"""{poi_info[0]}\n
+        {poi_info[1]}
+        Посмотреть на карте: {poi_info[3]}"""
     keyboard = [
         [InlineKeyboardButton("Дальше", callback_data='1'),
          InlineKeyboardButton("Стоп", callback_data='0')],
@@ -131,69 +144,47 @@ def choice(update, context):
     query.answer()
     cont = bool(int(query.data))
     if query.data == '2':
-        db_sess = db_session.create_session()
-        place_info = info(poi["name"], lon, lat, r)
-        keyboard = [
-            [InlineKeyboardButton("Дальше", callback_data='1'),
-             InlineKeyboardButton("Стоп", callback_data='0')],
-            [InlineKeyboardButton("Сохранить в закладки", callback_data='2'),
-             InlineKeyboardButton("Посмотреть закладки", callback_data='3')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        if db_sess.query(Place).filter(Place.name == place_info[0]):
-            update.callback_query.message.edit_text("Место уже в закладках", reply_markup=reply_markup)
-            return 5
-        place = Place()
-        place.name = place_info[0]
-        place.description = place_info[1]
-        place.phone = place_info[2]
-        place.opening_hours = place_info[3]
-        place.website = place_info[4]
-        place.map_link = place_info[5]
-        db_sess.add(place)
-        db_sess.commit()
-        update.callback_query.message.edit_text("Место добавлено в закладки", reply_markup=reply_markup)
-        return 5
+        return adding_bookmarks(update)
     if query.data == '3':
-        db_sess = db_session.create_session()
-        text = ""
-        for place in db_sess.query(Place).all():
-            desc = f"""{place.name}\n
-            {place.description}
-            Телефон: {place.phone}
-            Часы работы: {place.opening_hours}
-            {place.website}
-            Посмотреть на карте: {place.map_link}"""
-            text += desc + '\n\n'
-        keyboard = [
-            [InlineKeyboardButton("Дальше", callback_data='1'),
-             InlineKeyboardButton("Стоп", callback_data='0')],
-            [InlineKeyboardButton("Сохранить в закладки", callback_data='2'),
-             InlineKeyboardButton("Посмотреть закладки", callback_data='3')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        if not text:
-            text = "Закладок пока нет"
-        update.callback_query.message.edit_text(text, reply_markup=reply_markup)
-        return 5
+        return displaying_bookmarks(update)
     if not cont:
         poi_info = info(poi["name"], lon, lat, r)
+        if len(poi_info) == 6:
+            desc = f"""{poi_info[0]}\n
+            {poi_info[1]}
+            Телефон: {poi_info[2]}
+            Часы работы: {poi_info[3]}
+            {poi_info[4]}
+            Посмотреть на карте: {poi_info[5]}"""
+        elif len(poi_info) == 5:
+            desc = f"""{poi_info[0]}\n
+            {poi_info[1]}
+            Телефон / часы работы: {poi_info[3]}
+            Посмотреть на карте: {poi_info[4]}"""
+        else:
+            desc = f"""{poi_info[0]}\n
+            {poi_info[1]}
+            Посмотреть на карте: {poi_info[3]}"""
+        update.callback_query.message.edit_text(desc + '\n' + "Хороший выбор!")
+        return ConversationHandler.END
+    poi = next(poi_generator)
+    poi_info = info(poi["name"], lon, lat, r)
+    if len(poi_info) == 6:
         desc = f"""{poi_info[0]}\n
         {poi_info[1]}
         Телефон: {poi_info[2]}
         Часы работы: {poi_info[3]}
         {poi_info[4]}
         Посмотреть на карте: {poi_info[5]}"""
-        update.callback_query.message.edit_text(desc + '\n' + "Хороший выбор!")
-        return ConversationHandler.END
-    poi = next(poi_generator)
-    poi_info = info(poi["name"], lon, lat, r)
-    desc = f"""{poi_info[0]}\n
-    {poi_info[1]}
-    Телефон: {poi_info[2]}
-    Часы работы: {poi_info[3]}
-    {poi_info[4]}
-    Посмотреть на карте: {poi_info[5]}"""
+    elif len(poi_info) == 5:
+        desc = f"""{poi_info[0]}\n
+        {poi_info[1]}
+        Телефон / часы работы: {poi_info[3]}
+        Посмотреть на карте: {poi_info[4]}"""
+    else:
+        desc = f"""{poi_info[0]}\n
+        {poi_info[1]}
+        Посмотреть на карте: {poi_info[3]}"""
     keyboard = [
         [InlineKeyboardButton("Дальше", callback_data='1'),
          InlineKeyboardButton("Стоп", callback_data='0')],
@@ -202,6 +193,58 @@ def choice(update, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text(desc, reply_markup=reply_markup)
+    return 5
+
+
+def displaying_bookmarks(update):
+    db_sess = db_session.create_session()
+    text = ""
+    for place in db_sess.query(Place).all():
+        desc = f"""{place.name}\n
+            {place.description}
+            Телефон: {place.phone}
+            Часы работы: {place.opening_hours}
+            {place.website}
+            Посмотреть на карте: {place.map_link}"""
+        text += desc + '\n\n'
+    keyboard = [
+        [InlineKeyboardButton("Дальше", callback_data='1'),
+         InlineKeyboardButton("Стоп", callback_data='0')],
+        [InlineKeyboardButton("Сохранить в закладки", callback_data='2'),
+         InlineKeyboardButton("Посмотреть закладки", callback_data='3')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    if not text:
+        text = "Закладок пока нет"
+    update.callback_query.message.edit_text(text, reply_markup=reply_markup)
+    return 5
+
+
+def adding_bookmarks(update):
+    db_sess = db_session.create_session()
+    place_info = info(poi["name"], lon, lat, r)
+    keyboard = [
+        [InlineKeyboardButton("Дальше", callback_data='1'),
+         InlineKeyboardButton("Стоп", callback_data='0')],
+        [InlineKeyboardButton("Сохранить в закладки", callback_data='2'),
+         InlineKeyboardButton("Посмотреть закладки", callback_data='3')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    if db_sess.query(Place).filter(Place.name == place_info[0]):
+        update.callback_query.message.edit_text(
+            "Место уже в закладках", reply_markup=reply_markup)
+        return 5
+    place = Place()
+    place.name = place_info[0]
+    place.description = place_info[1]
+    place.phone = place_info[2]
+    place.opening_hours = place_info[3]
+    place.website = place_info[4]
+    place.map_link = place_info[5]
+    db_sess.add(place)
+    db_sess.commit()
+    update.callback_query.message.edit_text(
+        "Место добавлено в закладки", reply_markup=reply_markup)
     return 5
 
 
