@@ -140,6 +140,7 @@ def choice(update, context):
         reply_markup = InlineKeyboardMarkup(keyboard)
         if db_sess.query(Place).filter(Place.name == place_info[0]):
             update.callback_query.message.edit_text("Место уже в закладках", reply_markup=reply_markup)
+            return 5
         place = Place()
         place.name = place_info[0]
         place.description = place_info[1]
