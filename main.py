@@ -5,6 +5,7 @@ from geocode import get_coordinates
 from poi_search import find_subcategories, find_poi
 from json import load
 from translate import en_ru
+from org_search import info
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -18,6 +19,7 @@ lon = 0.0
 r = 0
 cont = False
 poi_generator = None
+poi = ""
 with open("categories.json", 'r') as jsonfile:
     categories = load(jsonfile)["poiCategories"]
 
@@ -94,37 +96,33 @@ def category(update, context):
 
 
 def subcategory(update, context):
-    global cont, poi_generator
+    global cont, poi_generator, poi
     query = update.callback_query
     query.answer()
     poi_id = query.data
     cont = True
     poi_generator = find_poi(poi_id, lon, lat, r)
     poi = next(poi_generator)
+    desc = info(poi["name"], lon, lat, r)
     keyboard = [
         [InlineKeyboardButton("Дальше", callback_data='1'),
          InlineKeyboardButton("Стоп", callback_data='0')]
     ]
-    desc = f"""{poi["name"]} \n
-               Телефон: {poi["phone"]} \n
-               Сайт: {poi["url"]} \n"""
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text(desc, reply_markup=reply_markup)
     return 5
 
 
 def choice(update, context):
-    global cont, poi_generator
+    global cont, poi_generator, poi
     query = update.callback_query
     query.answer()
     cont = bool(int(query.data))
     if not cont:
-        update.callback_query.message.edit_text("Хороший выбор!")
+        update.callback_query.message.edit_text(info(poi["name"], lon, lat, r) + '\n' + "Хороший выбор!")
         return 1
     poi = next(poi_generator)
-    desc = f"""{poi["name"]} \n
-                   Телефон: {poi["phone"]} \n
-                   Сайт: {poi["url"]} \n"""
+    desc = info(poi["name"], lon, lat, r)
     keyboard = [
         [InlineKeyboardButton("Дальше", callback_data='1'),
          InlineKeyboardButton("Стоп", callback_data='0')]
