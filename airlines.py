@@ -45,8 +45,6 @@ def get_flights(origin, dest, date):
     }
     response = get(url, params=params, headers=headers).json()
     text = "Информация о рейсах: \n\n"
-    with open("flights.json", 'w') as jsonfile:
-        json.dump(response, jsonfile)
     if not response["data"]:
         text += "К сожалению, рейсов в выбранный день нет."
     for offer in response["data"]:

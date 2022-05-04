@@ -225,7 +225,7 @@ def choice(update, context):
         keyboard = [
             [InlineKeyboardButton("Найти интересные места", callback_data='1'),
              InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
-            [InlineKeyboardButton("Найти билеты на самолет", callback_data='3')]
+            [InlineKeyboardButton("Информация о авиарейсах", callback_data='3')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.callback_query.message.edit_text(desc + '\n' + "Хороший выбор!", reply_markup=reply_markup)
@@ -261,7 +261,7 @@ def weather(update, context):
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
-        [InlineKeyboardButton("Найти билеты на самолет", callback_data='3')]
+        [InlineKeyboardButton("Информация о авиарейсах", callback_data='3')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.callback_query.message.edit_text(data, reply_markup=reply_markup)
@@ -277,7 +277,7 @@ def flights(update, context):
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
-        [InlineKeyboardButton("Найти билеты на самолет", callback_data='3')]
+        [InlineKeyboardButton("Информация о авиарейсах", callback_data='3')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text(text, reply_markup=reply_markup)
@@ -291,9 +291,7 @@ def stop(update, context):
 
 def main():
     updater = Updater(TOKEN)
-
     dp = updater.dispatcher
-
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler('start', start)],
         states={
@@ -308,10 +306,8 @@ def main():
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
-
     dp.add_handler(conv_handler)
     updater.start_polling()
-
     updater.idle()
 
 
