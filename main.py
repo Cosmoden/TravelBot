@@ -9,6 +9,7 @@ from org_search import info
 from data import db_session
 from data.places import Place
 from weather import current_weather, forecast
+from airlines import get_flights
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG
@@ -20,6 +21,7 @@ TOKEN = '5165015893:AAGYCc1P8pRUSmI2iQLGvwbrebjHwyiNvhA'
 lat = 0.0
 lon = 0.0
 r = 0
+address = ""
 cont = False
 poi_generator = None
 poi = ""
@@ -31,18 +33,18 @@ def start(update, context):
     context.bot.send_photo(update.message.chat_id,
                            "https://s.inyourpocket.com/img/figure/2019-10/mariacki_old-square_adobestock_rh2010.jpeg",
                            caption="Привет!\nДавай вместе разнообразим твоё путешествие.\n")
-    update.message.reply_text("Куда ты хочешь поехать? Напиши адрес")
+    update.message.reply_text("Куда ты хочешь поехать? Напиши адрес, начиная с города")
     return 1
 
 
 def location(update, context):
-    global lat, lon
+    global lat, lon, address
     address = update.message.text
     lon, lat = get_coordinates(address).split()
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
-        [InlineKeyboardButton("Найти билеты на самолет", callback_data='3')]
+        [InlineKeyboardButton("Информация о авиарейсах", callback_data='3')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text("Отличное место! Что тебя интересует?", reply_markup=reply_markup)
@@ -64,6 +66,9 @@ def menu(update, context):
         update.callback_query.message.edit_text("Какая информация о погоде тебе нужна?", reply_markup=reply_markup)
         return 7
     if query.data == '3':
+        update.callback_query.message.edit_text("Введи город отправления и дату вылета (в формате"
+                                                " 'гггг-мм-чч') через пробел. "
+                                                "Обязательно соблюди формат даты!")
         return 8
 
 
@@ -82,7 +87,7 @@ def radius(update, context):
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
     update.message.reply_text("Начнем подбор мест. Что именно тебя интересует?",
-                                            reply_markup=reply_markup)
+                              reply_markup=reply_markup)
     return 4
 
 
@@ -263,6 +268,22 @@ def weather(update, context):
     return 2
 
 
+def flights(update, context):
+    global address
+    flight_info = update.message.text
+    city = flight_info[:-10]
+    date = flight_info[-10:]
+    text = get_flights(city, address.split(', ')[0], date)
+    keyboard = [
+        [InlineKeyboardButton("Найти интересные места", callback_data='1'),
+         InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
+        [InlineKeyboardButton("Найти билеты на самолет", callback_data='3')]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(text, reply_markup=reply_markup)
+    return 2
+
+
 def stop(update, context):
     update.message.reply_text("Удачного путешествия!")
     return ConversationHandler.END
@@ -282,7 +303,8 @@ def main():
             4: [CallbackQueryHandler(category)],
             5: [CallbackQueryHandler(subcategory)],
             6: [CallbackQueryHandler(choice)],
-            7: [CallbackQueryHandler(weather)]
+            7: [CallbackQueryHandler(weather)],
+            8: [MessageHandler(Filters.text & ~Filters.command, flights)]
         },
         fallbacks=[CommandHandler('stop', stop)]
     )
