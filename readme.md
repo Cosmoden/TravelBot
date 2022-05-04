@@ -15,7 +15,7 @@ Another thing you can do with the bot is look up flights to the location you cho
 'See flight info' menu option, specify the departure city and date and the bot will show up to 10 
 flights matching your date and city.
 <br>
-To access the bot, search @sightseer_bot in Telegram.
+We're currently experiencing problems with our hosting, so the bot is temporariy unavailable without directly launching the source code.
 <br><br>
 # Бот-помощник в путешествии <br>
 Этот Telegram-бот поможет вам узнать больше о месте, в которое вы собираетесь поехать.
@@ -31,4 +31,4 @@ To access the bot, search @sightseer_bot in Telegram.
 Еще одна доступная функция - это поиск авиарейсов в нужное вам место. Выберите опцию 'Информация о рейсах',
 укажите город и дату отправления, и бот покажет до 10 доступных рейсов.
 <br>
-Чтобы получить доступ к боту, найдите @sightseer_bot в Телеграме.
+К сожалению, на данный момент мы испытываем технические неполадки с хостингом, поэтому бот доступен только при запуске программы напрямую.
