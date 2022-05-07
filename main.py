@@ -18,13 +18,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 TOKEN = '5165015893:AAGYCc1P8pRUSmI2iQLGvwbrebjHwyiNvhA'
-lat = 0.0
-lon = 0.0
-r = 0
-address = ""
-cont = False
-poi_generator = None
-poi = ""
 with open("categories.json", 'r') as jsonfile:
     categories = load(jsonfile)["poiCategories"]
 
@@ -38,9 +31,8 @@ def start(update, context):
 
 
 def location(update, context):
-    global lat, lon, address
-    address = update.message.text
-    lon, lat = get_coordinates(address).split()
+    context.user_data["address"] = update.message.text
+    context.user_data["lon"], context.user_data["lat"] = get_coordinates(context.user_data["address"]).split()
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
@@ -73,8 +65,7 @@ def menu(update, context):
 
 
 def radius(update, context):
-    global r
-    r = float(update.message.text)
+    context.user_data["r"] = float(update.message.text)
     keyboard = [
         [InlineKeyboardButton("Рестораны и кафе", callback_data='1'),
          InlineKeyboardButton("Достопримечательности", callback_data='2')],
@@ -92,7 +83,6 @@ def radius(update, context):
 
 
 def category(update, context):
-    global lat, lon, r
     query = update.callback_query
     query.answer()
     keyboard = []
@@ -106,7 +96,8 @@ def category(update, context):
         '7': ['7309', '7311'],
         '8': ['7369', '7313']
     }
-    subcategories = find_subcategories(categories_dict[query.data], lat, lon, r)
+    subcategories = find_subcategories(categories_dict[query.data], context.user_data["lat"], context.user_data["lon"],
+                                       context.user_data["r"])
     if not subcategories:
         update.callback_query.message.edit_text("К сожалению, в этой зоне поиска нет подходящих мест.\n"
                                                 "Попробуем еще раз? Введи адрес")
@@ -138,14 +129,15 @@ def category(update, context):
 
 
 def subcategory(update, context):
-    global cont, poi_generator, poi
     query = update.callback_query
     query.answer()
     poi_id = query.data
-    cont = True
-    poi_generator = find_poi(poi_id, lon, lat, r)
-    poi = next(poi_generator)
-    poi_info = info(poi["name"], lon, lat, r)
+    context.user_data["cont"] = True
+    context.user_data["poi_generator"] = find_poi(poi_id, context.user_data["lon"], context.user_data["lat"],
+                                                  context.user_data["r"])
+    context.user_data["poi"] = next(context.user_data["poi_generator"])
+    poi_info = info(context.user_data["poi"]["name"], context.user_data["lon"], context.user_data["lat"],
+                    context.user_data["r"])
     desc = f"""{poi_info[0]}\n
     {poi_info[1]}
     Телефон: {poi_info[2]}
@@ -164,13 +156,13 @@ def subcategory(update, context):
 
 
 def choice(update, context):
-    global cont, poi_generator, poi
     query = update.callback_query
     query.answer()
-    cont = bool(int(query.data))
+    context.user_data["cont"] = bool(int(query.data))
     if query.data == '2':
         db_sess = db_session.create_session()
-        place_info = info(poi["name"], lon, lat, r)
+        place_info = info(context.user_data["poi"]["name"], context.user_data["lon"], context.user_data["lat"],
+                          context.user_data["r"])
         keyboard = [
             [InlineKeyboardButton("Дальше", callback_data='1'),
              InlineKeyboardButton("Стоп", callback_data='0')],
@@ -214,8 +206,9 @@ def choice(update, context):
             text = "Закладок пока нет"
         update.callback_query.message.edit_text(text, reply_markup=reply_markup)
         return 6
-    if not cont:
-        poi_info = info(poi["name"], lon, lat, r)
+    if not context.user_data["cont"]:
+        poi_info = info(context.user_data["poi"]["name"], context.user_data["lon"], context.user_data["lat"],
+                        context.user_data["r"])
         desc = f"""{poi_info[0]}\n
         {poi_info[1]}
         Телефон: {poi_info[2]}
@@ -230,8 +223,9 @@ def choice(update, context):
         reply_markup = InlineKeyboardMarkup(keyboard)
         update.callback_query.message.edit_text(desc + '\n' + "Хороший выбор!", reply_markup=reply_markup)
         return 2
-    poi = next(poi_generator)
-    poi_info = info(poi["name"], lon, lat, r)
+    context.user_data["poi"] = next(context.user_data["poi_generator"])
+    poi_info = info(context.user_data["poi"]["name"], context.user_data["lon"], context.user_data["lat"],
+                    context.user_data["r"])
     desc = f"""{poi_info[0]}\n
     {poi_info[1]}
     Телефон: {poi_info[2]}
@@ -250,14 +244,13 @@ def choice(update, context):
 
 
 def weather(update, context):
-    global lat, lon
     query = update.callback_query
     query.answer()
     data = ""
     if query.data == '1':
-        data = current_weather(lon, lat)
+        data = current_weather(context.user_data["lon"], context.user_data["lat"])
     elif query.data == '2':
-        data = forecast(lon, lat)
+        data = forecast(context.user_data["lon"], context.user_data["lat"])
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
@@ -269,11 +262,10 @@ def weather(update, context):
 
 
 def flights(update, context):
-    global address
     flight_info = update.message.text
     city = flight_info[:-10]
     date = flight_info[-10:]
-    text = get_flights(city, address.split(', ')[0], date)
+    text = get_flights(city, context.user_data["address"].split(', ')[0], date)
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
