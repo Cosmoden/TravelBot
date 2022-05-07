@@ -18,11 +18,10 @@ def current_weather(lon, lat):
     }
     response = get(url, params=params)
     data = response.json()["current"]
-    text = f""" {data["weather"][0]["description"].capitalize()}
+    return f""" {data["weather"][0]["description"].capitalize()}
     Температура воздуха {data["temp"]}°C
     Ощущается как {data["feels_like"]}°C
     Влажность {data["humidity"]}%"""
-    return text
 
 
 def forecast(lon, lat):
@@ -39,11 +38,8 @@ def forecast(lon, lat):
     }
     response = get(url, params=params).json()
     data = response["daily"]
-    text = ""
-    for day in data:
-        text += f"""{str(datetime.now())[:10]}\n
+    return "".join(f"""{str(datetime.now())[:10]}\n
         {day["weather"][0]["description"].capitalize()}
         Температура воздуха: днем {day["temp"]["day"]}°C, ночью {day["temp"]["night"]}
         Ощущается: днем как {day["feels_like"]["day"]}°C, ночью как {day["feels_like"]["night"]}
-        Влажность {day["humidity"]}%\n\n"""
-    return text
+        Влажность {day["humidity"]}%\n\n""" for day in data)

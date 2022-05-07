@@ -26,20 +26,23 @@ def start(update, context):
     context.bot.send_photo(update.message.chat_id,
                            "https://s.inyourpocket.com/img/figure/2019-10/mariacki_old-square_adobestock_rh2010.jpeg",
                            caption="Привет!\nДавай вместе разнообразим твоё путешествие.\n")
-    update.message.reply_text("Куда ты хочешь поехать? Напиши адрес, начиная с города")
+    update.message.reply_text(
+        "Куда ты хочешь поехать? Напиши адрес, начиная с города")
     return 1
 
 
 def location(update, context):
     context.user_data["address"] = update.message.text
-    context.user_data["lon"], context.user_data["lat"] = get_coordinates(context.user_data["address"]).split()
+    context.user_data["lon"], context.user_data["lat"] = get_coordinates(
+        context.user_data["address"]).split()
     keyboard = [
         [InlineKeyboardButton("Найти интересные места", callback_data='1'),
          InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
         [InlineKeyboardButton("Информация о авиарейсах", callback_data='3')]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text("Отличное место! Что тебя интересует?", reply_markup=reply_markup)
+    update.message.reply_text(
+        "Отличное место! Что тебя интересует?", reply_markup=reply_markup)
     return 2
 
 
@@ -55,7 +58,8 @@ def menu(update, context):
              InlineKeyboardButton("Погода на ближайшие 7 дней", callback_data='2')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.callback_query.message.edit_text("Какая информация о погоде тебе нужна?", reply_markup=reply_markup)
+        update.callback_query.message.edit_text(
+            "Какая информация о погоде тебе нужна?", reply_markup=reply_markup)
         return 7
     if query.data == '3':
         update.callback_query.message.edit_text("Введи город отправления и дату вылета (в формате"
@@ -124,7 +128,8 @@ def category(update, context):
             name1 = en_ru(name1).lower().capitalize()
             keyboard.append([InlineKeyboardButton(name1, callback_data=id1)])
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.callback_query.message.edit_text("А более точно?", reply_markup=reply_markup)
+    update.callback_query.message.edit_text(
+        "А более точно?", reply_markup=reply_markup)
     return 5
 
 
@@ -171,7 +176,8 @@ def choice(update, context):
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
         if db_sess.query(Place).filter(Place.name == place_info[0]).first():
-            update.callback_query.message.edit_text("Место уже в закладках", reply_markup=reply_markup)
+            update.callback_query.message.edit_text(
+                "Место уже в закладках", reply_markup=reply_markup)
             return 6
         place = Place()
         place.name = place_info[0]
@@ -182,7 +188,8 @@ def choice(update, context):
         place.map_link = place_info[5]
         db_sess.add(place)
         db_sess.commit()
-        update.callback_query.message.edit_text("Место добавлено в закладки", reply_markup=reply_markup)
+        update.callback_query.message.edit_text(
+            "Место добавлено в закладки", reply_markup=reply_markup)
         return 6
     if query.data == '3':
         db_sess = db_session.create_session()
@@ -204,7 +211,8 @@ def choice(update, context):
         reply_markup = InlineKeyboardMarkup(keyboard)
         if not text:
             text = "Закладок пока нет"
-        update.callback_query.message.edit_text(text, reply_markup=reply_markup)
+        update.callback_query.message.edit_text(
+            text, reply_markup=reply_markup)
         return 6
     if not context.user_data["cont"]:
         poi_info = info(context.user_data["poi"]["name"], context.user_data["lon"], context.user_data["lat"],
@@ -218,10 +226,12 @@ def choice(update, context):
         keyboard = [
             [InlineKeyboardButton("Найти интересные места", callback_data='1'),
              InlineKeyboardButton("Посмотреть погоду", callback_data='2')],
-            [InlineKeyboardButton("Информация о авиарейсах", callback_data='3')]
+            [InlineKeyboardButton(
+                "Информация о авиарейсах", callback_data='3')]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.callback_query.message.edit_text(desc + '\n' + "Хороший выбор!", reply_markup=reply_markup)
+        update.callback_query.message.edit_text(
+            desc + '\n' + "Хороший выбор!", reply_markup=reply_markup)
         return 2
     context.user_data["poi"] = next(context.user_data["poi_generator"])
     poi_info = info(context.user_data["poi"]["name"], context.user_data["lon"], context.user_data["lat"],
@@ -248,7 +258,8 @@ def weather(update, context):
     query.answer()
     data = ""
     if query.data == '1':
-        data = current_weather(context.user_data["lon"], context.user_data["lat"])
+        data = current_weather(
+            context.user_data["lon"], context.user_data["lat"])
     elif query.data == '2':
         data = forecast(context.user_data["lon"], context.user_data["lat"])
     keyboard = [

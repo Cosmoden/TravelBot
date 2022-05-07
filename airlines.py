@@ -30,7 +30,8 @@ def get_flights(origin, dest, date):
     auth_headers = {
         "content-type": "application/x-www-form-urlencoded"
     }
-    auth_response = post(auth_url, data=auth_params, headers=auth_headers).json()
+    auth_response = post(auth_url, data=auth_params,
+                         headers=auth_headers).json()
     token = auth_response["access_token"]
     url = "https://test.api.amadeus.com/v2/shopping/flight-offers"
     params = {
